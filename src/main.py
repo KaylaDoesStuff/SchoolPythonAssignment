@@ -1,6 +1,7 @@
 import requests
 import time
-difficulties = {'easy', 'medium','hard'}
+import json
+difficulties = ['Easy', 'Medium','Hard']
 category_url = (requests.get('https://opentdb.com/api_category.php')).json()
 categories = {}
 def get_int(query):
@@ -16,9 +17,10 @@ def print_categories():
         categories[i] = category_url['trivia_categories'][i]['name']
         print(f'{i + 1}: {categories[i]}')
         i += 1
+        time.sleep(0.1)
+    time.sleep(5)
 def set_amount(amount):
     if amount > 50 or amount < 1:
-        print('Invalid number. Please retry.')
         while True:
             var = get_int('How many questions do you want to be asked? > ')
             if var > 50 or var < 1: print('Invalid number. Please retry.')
@@ -35,8 +37,16 @@ class Questions:
     def set_category(self, category):
         self.category = category + 8
         while self.category < 9 or self.category > 32: print('Invalid number. Please retry')
-    def set_difficulty(self, difficulty): self.difficulty = difficulty
+    def set_difficulty(self):
+        x = 0
+        for i in difficulties:
+            x += 1
+            print(f'{x}: {i}')
+        var = get_int('What difficulty would you like to play?')
+        while var < 0 or var > len(difficulties): print('Invalid option. Please repeat...'); self.set_difficulty()
+        self.difficulty = difficulties[var]
     def get_questions(self):
+        x = 0
         while True:
             url = (requests.get(f'https://opentdb.com/api.php?amount={self.amount}&category={self.category}&difficulty={self.difficulty}')).json()
             if url['response_code'] == 0:
@@ -50,17 +60,14 @@ class Questions:
                     if self.difficulty == i:
                         set_amount(cat_question_amount['category_question_count'][f'total_{i}_question_count'])
             elif url['response_code'] == 5:
-                x = 0
-                while url['response_code'] == 5:
-                    x += 1
-                    print(f'Rate Limited! Waiting 5 seconds. Retried {x} time(s)...')
-                    time.sleep(5)
-                    if x == 5:
-                        print('API unreachable. Please restart the program.')
-                        exit()
+                x += 1
+                print(f'Rate Limited! Waiting 5 seconds. Retried {x} time(s)...')
+                time.sleep(5)
+                if x == 5: exit('API unreachable. Please restart the program.')
 
 questions = Questions('easy', 0, 0)
 set_amount(0)
 print_categories()
 questions.set_category(get_int('What number category would you like? > '))
+questions.set_difficulty()
 questions.get_questions()
