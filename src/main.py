@@ -5,11 +5,10 @@ difficulties = ['Easy', 'Medium','Hard']
 difficultiesLow = ['easy', 'medium', 'hard']
 category_url = json.loads(requests.get('https://opentdb.com/api_category.php').text)
 categories = {}
+players = {}
 def get_int(query):
     while True:
-        try:
-            var = int(input(query))
-            break
+        try: var = int(input(query)); break
         except ValueError: print('Please input a valid number. >')
     return var
 def print_categories():
@@ -33,6 +32,33 @@ def set_category(category):
             if var > 24 or var < 1: print('Invalid number. Please retry.')
             else: return var
     else: return category
+
+def playerCountAndName():
+    player_amount = get_int('How many people are playing today? > ')
+    i = 0
+    while i < player_amount:
+        players[i]['Name'] = input(f"Player {i+1}'s Name > ")
+        players[i]['Score'] = 0
+
+class Leaderboard:
+    def __init__(self, topName, topScore):
+        self.topName = topName
+        self.topScore = topScore
+
+class Player:
+    def __init__(self, name, score, order):
+        self.name = name
+        self.score = score
+        self.order = order
+
+    def get_order(self): return self.order
+    def get_name(self): return self.name
+    def get_score(self): return self.score
+
+    def set_name(self, name): self.name = name
+    def set_order(self, order): self.order = order
+    def set_score(self, score): self.score = score
+
 class Questions:
     def __init__(self, difficulty, amount, category):
         self.difficulty = difficulty
@@ -52,14 +78,14 @@ class Questions:
     def get_questions(self):
         x = 0
         while True:
-            url = json.loads(requests.get(f'https://opentdb.com/api.php?amount={self.amount}&category={self.category}&difficulty={self.difficulty}').text)
+            url = json.loads(requests.get(f'https://opentdb.com/api.php?amount={self.amount}&category={self.category}&difficulty={self.difficulty}&type=multiple-choice').text)
             if url['response_code'] == 1:
                 cat_question_amount = json.loads(requests.get(f'https://opentdb.com/api_count.php?category={self.category}').text)
                 print("Too many questions! Defaulting to maximum amount in category...")
                 time.sleep(5)
                 for i in difficultiesLow:
                     if self.difficulty == i:
-                        set_amount(cat_question_amount['category_question_count'][f'total_{i}_question_count'])
+                        self.amount = set_amount(cat_question_amount['category_question_count'][f'total_{i}_question_count'])
             elif url['response_code'] == 5:
                 x += 1
                 print(f'Rate Limited! Waiting 5 seconds. Retried {x} time(s)...')
@@ -67,12 +93,9 @@ class Questions:
                 if x == 5: exit('API unreachable. Please restart the program.')
             else: break
 
-print('Preparing program...')
-time.sleep(5)
 questions = Questions('easy', 0, 0)
 questions.amount = set_amount(0)
 print_categories()
 questions.category = set_category(0)
 questions.set_difficulty()
-print(questions.amount, questions.difficulty, questions.category)
 questions.get_questions()
